@@ -18,6 +18,11 @@ fn get_ffmpeg_path() -> PathBuf {
 
 fn main() {
     let platform_name = env::var("CARGO_CFG_TARGET_OS").unwrap();
+
+    if platform_name == "ios" {
+        return; // TODO(zhuowei)
+    }
+
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let cpp_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("cpp");
 
