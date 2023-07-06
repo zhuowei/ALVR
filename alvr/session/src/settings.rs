@@ -1110,7 +1110,7 @@ pub fn session_settings_default() -> SettingsDefault {
                 variant: LinuxAudioBackendDefaultVariant::Alsa,
             },
             game_audio: SwitchDefault {
-                enabled: !cfg!(target_os = "linux"),
+                enabled: !cfg!(any(target_os = "linux", target_os = "ios")),
                 content: GameAudioConfigDefault {
                     device: OptionalDefault {
                         set: false,
