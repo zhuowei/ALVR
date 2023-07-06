@@ -58,7 +58,13 @@ fn get_driver_dir_from_registered() -> StrResult<PathBuf> {
     fmt_e!("ALVR driver path not registered")
 }
 
+#[cfg(not(target_os = "ios"))]
 pub fn get_driver_dir() -> StrResult<PathBuf> {
     get_driver_dir_from_registered()
         .map_err(|e| format!("ALVR driver path not stored and not registered ({e})"))
+}
+
+#[cfg(target_os = "ios")]
+pub fn get_driver_dir() -> StrResult<PathBuf> {
+    Ok(PathBuf::from(std::env::var("ALVR_DIR").unwrap()))
 }

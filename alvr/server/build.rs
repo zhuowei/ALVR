@@ -16,15 +16,26 @@ fn get_ffmpeg_path() -> PathBuf {
     }
 }
 
+fn ios_build(out_dir: &PathBuf) {
+    bindgen::builder()
+        .clang_arg("-xc++")
+        .header("cpp/alvr_server/bindings.h")
+        .derive_default(true)
+        .generate()
+        .unwrap()
+        .write_to_file(out_dir.join("bindings.rs"))
+        .unwrap();
+}
+
 fn main() {
     let platform_name = env::var("CARGO_CFG_TARGET_OS").unwrap();
-
-    if platform_name == "ios" {
-        return; // TODO(zhuowei)
-    }
-
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let cpp_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("cpp");
+
+    if platform_name == "ios" {
+        ios_build(&out_dir);
+        return; // We build a static lib and do deps outside
+    }
 
     let platform_subpath = match platform_name.as_str() {
         "windows" => "cpp/platform/win32",

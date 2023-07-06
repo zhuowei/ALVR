@@ -7,7 +7,8 @@ authors = ["alvr-org", "Valve Corporation"]
 license = "MIT"
 
 [lib]
-crate-type = ["cdylib"]
+#crate-type = ["cdylib"]
+crate-type = ["staticlib"]
 
 [features]
 gpl = [] # Enable for FFmpeg support on Windows. Always enabled on Linux
