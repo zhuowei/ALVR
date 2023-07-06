@@ -17,5 +17,5 @@ serde = { version = "1", features = ["derive"] }
 settings-schema = { git = "https://github.com/zarik5/settings-schema-rs" }
 # settings-schema = { path = "../../../../settings-schema-rs/settings-schema" }
 
-[target.'cfg(not(target_os = "android"))'.dependencies]
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 rfd = "0.11"
