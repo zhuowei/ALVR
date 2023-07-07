@@ -1,6 +1,12 @@
-#include <stdint.h>
+#include <cstdint>
+#include <memory>
+#include <chrono>
+#include <cstdio>
+
+#include <Dispatch/Dispatch.h>
 
 #include "../alvr/server/cpp/alvr_server/bindings.h"
+#include "./EncodePipelineSW.h"
 
 const unsigned char *FRAME_RENDER_VS_CSO_PTR;
 unsigned int FRAME_RENDER_VS_CSO_LEN;
@@ -49,18 +55,52 @@ unsigned long long (*GetSerialNumber)(unsigned long long deviceID, char *outStri
 void (*SetOpenvrProps)(unsigned long long deviceID);
 void (*WaitForVSync)();
 
+static std::unique_ptr<alvr::EncodePipelineSW> gEncodePipelineSW;
+static bool gNextFrameIDR = true;
+
 void *CppEntryPoint(const char *pInterfaceName, int *pReturnCode) {
   // Callback from HmdDriverFactory
   *pReturnCode = 0;
   return nullptr;
 }
-void InitializeStreaming() {
+
+#define ALVR_H264 0
+
+static unsigned char* configbuf;
+static int configlength;
+static unsigned char* frame1buf;
+static int frame1length;
+
+static void ReadSampleFrame() {
+  // TODO(zhuowei): create pipeline from g_sessionPath
+  FILE* f = fopen("/Users/zhuowei/Documents/winprogress/alvr/ALVR/miniserver/BigSquareOfGreen.h264", "rb");
+  fseek(f, 0, SEEK_END);
+  size_t length = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  unsigned char* buf = new unsigned char[length];
+  fread(buf, 1, length, f);
+  fclose(f);
+  configbuf = buf;
+  frame1buf = (unsigned char*)memmem(buf, length, (unsigned char[]){0x00, 0x00, 0x01, 0x65}, 4);
+  configlength = frame1buf - configbuf;
+  frame1length = length - configlength;
 }
+
+void InitializeStreaming() {
+  printf("initialize streaming\n");
+  ReadSampleFrame();
+  uint64_t timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+  ParseFrameNals(ALVR_H264, configbuf, configlength,  timestamp, /*isIdr=*/true);
+}
+
 void DeinitializeStreaming() {
 }
 void SendVSync() {
 }
 void RequestIDR() {
+  uint64_t timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+  ParseFrameNals(ALVR_H264, frame1buf, frame1length, timestamp, /*isIdr=*/true);
+  // gNextFrameIDR = true;
 }
 void SetTracking(unsigned long long targetTimestampNs,
                             float controllerPoseTimeOffsetS,
@@ -77,6 +117,7 @@ void ShutdownSteamvr() {
 
 void SetOpenvrProperty(unsigned long long deviceID, FfiOpenvrProperty prop) {
 }
+
 void SetChaperone(float areaWidth, float areaHeight) {
 }
 void SetViewsConfig(FfiViewsConfig config) {
@@ -89,15 +130,11 @@ void SetButton(unsigned long long path, FfiButtonValue value) {
 void CaptureFrame() {
 }
 
-// NalParsing.cpp
-void ParseFrameNals(
-    int codec, unsigned char *buf, int len, unsigned long long targetTimestampNs, bool isIdr) {
-}
-
 extern "C" {
 void* HmdDriverFactory(const char* interface_name, int32_t* return_code);
 void CFRunLoopRun(void);
 }
+
 
 int main() {
   int32_t ret;

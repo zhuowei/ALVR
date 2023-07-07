@@ -1,10 +1,10 @@
-
-#include "Logger.h"
-#include "Settings.h"
-#include "Utils.h"
-#include "bindings.h"
 #include <mutex>
 #include <string.h>
+
+#include "../alvr/server/cpp/alvr_server/bindings.h"
+
+#define ALVR_CODEC_H264 0
+#define ALVR_CODEC_H265 1
 
 static const char NAL_PREFIX_3B[] = {0x00, 0x00, 0x01};
 static const char NAL_PREFIX_4B[] = {0x00, 0x00, 0x00, 0x01};
@@ -59,6 +59,7 @@ void sendHeaders(int codec, unsigned char *&buf, int &len, int nalNum) {
         return;
     }
 
+    printf("InitializeDecoder! %p %d\n", buf, headersLen);
     InitializeDecoder((const unsigned char *)buf, headersLen, codec);
 
     // move the cursor forward excluding config NALs
@@ -98,6 +99,7 @@ void processH265Nals(unsigned char *&buf, int &len) {
 
 void ParseFrameNals(
     int codec, unsigned char *buf, int len, unsigned long long targetTimestampNs, bool isIdr) {
+    printf("ParseFrameNals! %p %d\n", buf, len);
     if ((unsigned)len < sizeof(NAL_PREFIX_4B)) {
         return;
     }
@@ -108,5 +110,6 @@ void ParseFrameNals(
         processH265Nals(buf, len);
     }
 
+    printf("VideoSend! %p %d\n", buf, len);
     VideoSend(targetTimestampNs, buf, len, isIdr);
 }
