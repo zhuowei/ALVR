@@ -1064,7 +1064,7 @@ pub fn session_settings_default() -> SettingsDefault {
                 }
             },
             foveated_rendering: SwitchDefault {
-                enabled: true,
+                enabled: false,
                 content: FoveatedRenderingConfigDefault {
                     center_size_x: 0.45,
                     center_size_y: 0.4,
